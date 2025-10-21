@@ -18,6 +18,12 @@ pub struct SigSetBuilder {
     signatures: Vec<Signature>,
 }
 
+impl Default for SigSetBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SigSetBuilder {
     pub fn new() -> Self {
         Self {

@@ -8,10 +8,10 @@ pub struct Scanner<'a> {
 
 impl Scanner<'_> {
     pub fn scan_buf(&mut self, buf: &[u8]) -> Result<ScanResult> {
-        if let Some(file_type) = Self::infer_file_type(buf) {
-            if Self::is_supported_archive(&file_type) {
-                return self.scan_buf_ft(buf, &file_type);
-            }
+        if let Some(file_type) = Self::infer_file_type(buf)
+            && Self::is_supported_archive(&file_type)
+        {
+            return self.scan_buf_ft(buf, &file_type);
         }
         let sr = self.scanner.scan(buf)?.into();
         Ok(sr)
