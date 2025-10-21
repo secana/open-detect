@@ -1,4 +1,6 @@
 use crate::errors::Result;
+use std::fs;
+use std::path::Path;
 
 pub struct SigSet {
     pub(crate) rules: yara_x::Rules,
@@ -33,6 +35,63 @@ impl SigSetBuilder {
         self
     }
 
+    pub fn add_sig_dir(mut self, path: &Path) -> Result<Self> {
+        let entries = fs::read_dir(path)?;
+
+        for entry in entries {
+            let entry = entry?;
+            let path = entry.path();
+
+            // Skip directories
+            if path.is_dir() {
+                continue;
+            }
+
+            // Check for YARA file extensions
+            if let Some(extension) = path.extension() {
+                let ext = extension.to_string_lossy().to_lowercase();
+                if ext == "yar" || ext == "yara" || ext == "yrc" {
+                    // Read the file content
+                    let content = fs::read_to_string(&path)?;
+                    self.signatures.push(Signature(content));
+                }
+            }
+        }
+
+        Ok(self)
+    }
+
+    pub fn add_sig_dir_recursive(mut self, path: &Path) -> Result<Self> {
+        self.add_sig_dir_impl(path)?;
+        Ok(self)
+    }
+
+    fn add_sig_dir_impl(&mut self, path: &Path) -> Result<()> {
+        let entries = fs::read_dir(path)?;
+
+        for entry in entries {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.is_dir() {
+                // Recursively process subdirectories
+                self.add_sig_dir_impl(&path)?;
+            } else {
+                // Check for YARA file extensions
+                if let Some(extension) = path.extension() {
+                    let ext = extension.to_string_lossy().to_lowercase();
+                    if ext == "yar" || ext == "yara" || ext == "yrc" {
+                        // Read the file content
+                        let content = fs::read_to_string(&path)?;
+                        self.signatures.push(Signature(content));
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn build(self) -> Result<SigSet> {
         let mut compiler = yara_x::Compiler::new();
         for signature in self.signatures {
@@ -63,6 +122,31 @@ mod tests {
         let result = SigSetBuilder::new()
             .add_sigs(Signature("rule test { condition: ".to_string()))
             .build();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn add_sig_dir_loads_yara_files() {
+        use std::path::PathBuf;
+
+        let test_dir = PathBuf::from("tests/test_sigs");
+        let result = SigSetBuilder::new()
+            .add_sig_dir(&test_dir)
+            .expect("Failed to add sig dir")
+            .build();
+
+        assert!(result.is_ok());
+        let sig_set = result.unwrap();
+        assert_eq!(sig_set.count(), 1); // We have 1 .yara file in test_sigs
+    }
+
+    #[test]
+    fn add_sig_dir_nonexistent_directory() {
+        use std::path::PathBuf;
+
+        let test_dir = PathBuf::from("tests/nonexistent_dir");
+        let result = SigSetBuilder::new().add_sig_dir(&test_dir);
+
         assert!(result.is_err());
     }
 }

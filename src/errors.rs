@@ -8,4 +8,6 @@ pub enum Error {
     SignatureError(#[from] yara_x::errors::CompileError),
     #[error("Scanning error: {0}")]
     ScanError(#[from] yara_x::errors::ScanError),
+    #[error("I/O error: {0}")]
+    IoError(#[from] std::io::Error),
 }

@@ -263,3 +263,146 @@ fn test_scan_result_equality() {
     let result3: ScanResult = "different".into();
     assert_ne!(result1, result3);
 }
+
+#[test]
+fn test_add_sig_dir_loads_signatures() {
+    use std::path::Path;
+
+    let sig_dir = Path::new("tests/test_sigs");
+
+    let sig_set = SigSetBuilder::new()
+        .add_sig_dir(sig_dir)
+        .expect("Failed to load signatures from directory")
+        .build()
+        .expect("Failed to build signature set");
+
+    // Should have loaded the opendetect.yara file
+    assert_eq!(sig_set.count(), 1);
+
+    // Test that the loaded signature works
+    let mut scanner = Scanner::from(&sig_set);
+    let result = scanner.scan(b"b3BlbmRldGVjdAo=").expect("Scan failed");
+    assert!(matches!(result, ScanResult::Malicious(_)));
+}
+
+#[test]
+fn test_add_sig_dir_with_scan() {
+    use std::path::Path;
+
+    let sig_dir = Path::new("tests/test_sigs");
+
+    let sig_set = SigSetBuilder::new()
+        .add_sig_dir(sig_dir)
+        .expect("Failed to load signatures from directory")
+        .build()
+        .expect("Failed to build signature set");
+
+    let mut scanner = Scanner::from(&sig_set);
+
+    // Test file with signature
+    let file_content =
+        fs::read("tests/test_files/simple_text_with_sig.txt").expect("Failed to read test file");
+    let result = scanner.scan(&file_content).expect("Scan failed");
+
+    match result {
+        ScanResult::Malicious(detections) => {
+            assert_eq!(detections.len(), 1);
+            assert_eq!(detections[0].name, "OpenDetectTest");
+        }
+        ScanResult::Clean => panic!("Expected malicious result"),
+    }
+
+    // Test file without signature
+    let clean_content =
+        fs::read("tests/test_files/simple_text_without_sig.txt").expect("Failed to read test file");
+    let result = scanner.scan(&clean_content).expect("Scan failed");
+    assert_eq!(result, ScanResult::Clean);
+}
+
+#[test]
+fn test_add_sig_dir_recursive_loads_nested_signatures() {
+    use std::path::Path;
+
+    let sig_dir = Path::new("tests/test_sigs");
+
+    let sig_set = SigSetBuilder::new()
+        .add_sig_dir_recursive(sig_dir)
+        .expect("Failed to load signatures recursively")
+        .build()
+        .expect("Failed to build signature set");
+
+    // Should have loaded both opendetect.yara and subdir/nested_rule.yara
+    assert_eq!(sig_set.count(), 2);
+
+    let mut scanner = Scanner::from(&sig_set);
+
+    // Test with the main signature
+    let result = scanner.scan(b"b3BlbmRldGVjdAo=").expect("Scan failed");
+    assert!(matches!(result, ScanResult::Malicious(_)));
+
+    // Test with the nested signature
+    let result = scanner.scan(b"NESTED_TEST_SIGNATURE").expect("Scan failed");
+    match result {
+        ScanResult::Malicious(detections) => {
+            assert_eq!(detections.len(), 1);
+            assert_eq!(detections[0].name, "NestedTestRule");
+        }
+        ScanResult::Clean => panic!("Expected malicious result"),
+    }
+}
+
+#[test]
+fn test_add_sig_dir_nonexistent_directory() {
+    use std::path::Path;
+
+    let sig_dir = Path::new("tests/nonexistent_directory");
+
+    let result = SigSetBuilder::new().add_sig_dir(sig_dir);
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_add_sig_dir_ignores_non_yara_files() {
+    use std::path::Path;
+
+    // This directory contains both .yara and .txt files
+    let sig_dir = Path::new("tests/test_sigs");
+
+    let sig_set = SigSetBuilder::new()
+        .add_sig_dir(sig_dir)
+        .expect("Failed to load signatures")
+        .build()
+        .expect("Failed to build signature set");
+
+    // Should only load .yara files, not .txt or other files
+    assert_eq!(sig_set.count(), 1);
+}
+
+#[test]
+fn test_combine_manual_and_dir_signatures() {
+    use std::path::Path;
+
+    let sig_dir = Path::new("tests/test_sigs");
+
+    let sig_set = SigSetBuilder::new()
+        .add_sigs(Signature("rule ManualRule { condition: true }".to_string()))
+        .add_sig_dir(sig_dir)
+        .expect("Failed to load signatures from directory")
+        .build()
+        .expect("Failed to build signature set");
+
+    // Should have 1 manual rule + 1 from directory
+    assert_eq!(sig_set.count(), 2);
+
+    let mut scanner = Scanner::from(&sig_set);
+
+    // The manual rule should always match
+    let result = scanner.scan(b"any content").expect("Scan failed");
+    match result {
+        ScanResult::Malicious(detections) => {
+            assert!(detections.iter().any(|d| d.name == "ManualRule"));
+        }
+        ScanResult::Clean => panic!("Expected malicious result from ManualRule"),
+    }
+}
