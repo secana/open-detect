@@ -18,7 +18,7 @@ fn test_scan_file_with_matching_signature() {
     let test_file_path = "tests/test_files/simple_text_with_sig.txt";
     let file_content = fs::read(test_file_path).expect("Failed to read test file");
 
-    let result = scanner.scan(&file_content).expect("Scan failed");
+    let result = scanner.scan_buf(&file_content).expect("Scan failed");
 
     // Should detect the signature
     match result {
@@ -49,7 +49,7 @@ fn test_scan_file_without_matching_signature() {
     let test_file_path = "tests/test_files/simple_text_without_sig.txt";
     let file_content = fs::read(test_file_path).expect("Failed to read test file");
 
-    let result = scanner.scan(&file_content).expect("Scan failed");
+    let result = scanner.scan_buf(&file_content).expect("Scan failed");
 
     // Should be clean
     assert_eq!(result, ScanResult::Clean);
@@ -68,7 +68,7 @@ fn test_scan_empty_file() {
     let mut scanner = Scanner::from(&sig_set);
 
     // Scan empty content
-    let result = scanner.scan(&[]).expect("Scan failed");
+    let result = scanner.scan_buf(&[]).expect("Scan failed");
 
     assert_eq!(result, ScanResult::Clean);
 }
@@ -87,17 +87,17 @@ fn test_scan_signature_at_different_positions() {
 
     // Test signature at the beginning
     let content_start = b"b3BlbmRldGVjdAo= followed by text";
-    let result = scanner.scan(content_start).expect("Scan failed");
+    let result = scanner.scan_buf(content_start).expect("Scan failed");
     assert!(matches!(result, ScanResult::Malicious(_)));
 
     // Test signature at the end
     let content_end = b"some text followed by b3BlbmRldGVjdAo=";
-    let result = scanner.scan(content_end).expect("Scan failed");
+    let result = scanner.scan_buf(content_end).expect("Scan failed");
     assert!(matches!(result, ScanResult::Malicious(_)));
 
     // Test signature in the middle
     let content_middle = b"text before b3BlbmRldGVjdAo= text after";
-    let result = scanner.scan(content_middle).expect("Scan failed");
+    let result = scanner.scan_buf(content_middle).expect("Scan failed");
     assert!(matches!(result, ScanResult::Malicious(_)));
 }
 
@@ -114,15 +114,15 @@ fn test_multiple_scans_with_same_scanner() {
     let mut scanner = Scanner::from(&sig_set);
 
     // First scan - malicious
-    let result1 = scanner.scan(b"b3BlbmRldGVjdAo=").expect("Scan failed");
+    let result1 = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
     assert!(matches!(result1, ScanResult::Malicious(_)));
 
     // Second scan - clean
-    let result2 = scanner.scan(b"clean content").expect("Scan failed");
+    let result2 = scanner.scan_buf(b"clean content").expect("Scan failed");
     assert_eq!(result2, ScanResult::Clean);
 
     // Third scan - malicious again
-    let result3 = scanner.scan(b"b3BlbmRldGVjdAo=").expect("Scan failed");
+    let result3 = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
     assert!(matches!(result3, ScanResult::Malicious(_)));
 }
 
@@ -138,7 +138,7 @@ fn test_scan_result_detection_details() {
 
     let mut scanner = Scanner::from(&sig_set);
 
-    let result = scanner.scan(b"b3BlbmRldGVjdAo=").expect("Scan failed");
+    let result = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
 
     match result {
         ScanResult::Malicious(detections) => {
@@ -164,7 +164,7 @@ fn test_signature_set_with_no_rules() {
     assert_eq!(sig_set.count(), 0);
 
     let mut scanner = Scanner::from(&sig_set);
-    let scan_result = scanner.scan(b"any content").expect("Scan failed");
+    let scan_result = scanner.scan_buf(b"any content").expect("Scan failed");
 
     // Should always be clean with no rules
     assert_eq!(scan_result, ScanResult::Clean);
@@ -183,11 +183,11 @@ fn test_case_sensitivity_of_signature() {
     let mut scanner = Scanner::from(&sig_set);
 
     // Exact match - should detect
-    let result1 = scanner.scan(b"b3BlbmRldGVjdAo=").expect("Scan failed");
+    let result1 = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
     assert!(matches!(result1, ScanResult::Malicious(_)));
 
     // Different case - should NOT detect (base64 is case-sensitive)
-    let result2 = scanner.scan(b"B3BLBMRLDGVJDAO=").expect("Scan failed");
+    let result2 = scanner.scan_buf(b"B3BLBMRLDGVJDAO=").expect("Scan failed");
     assert_eq!(result2, ScanResult::Clean);
 }
 
@@ -204,7 +204,7 @@ fn test_partial_signature_match() {
     let mut scanner = Scanner::from(&sig_set);
 
     // Partial match should NOT trigger
-    let result = scanner.scan(b"b3BlbmRl").expect("Scan failed");
+    let result = scanner.scan_buf(b"b3BlbmRl").expect("Scan failed");
     assert_eq!(result, ScanResult::Clean);
 }
 
@@ -226,7 +226,7 @@ fn test_scan_binary_data() {
         b'j', b'd', b'A', b'o', b'=', 0xFF, 0xFE, 0xFD,
     ];
 
-    let result = scanner.scan(&binary_data).expect("Scan failed");
+    let result = scanner.scan_buf(&binary_data).expect("Scan failed");
     assert!(matches!(result, ScanResult::Malicious(_)));
 }
 
@@ -247,7 +247,7 @@ fn test_scan_large_file_with_signature() {
     let signature = b"b3BlbmRldGVjdAo=";
     large_content.splice(50_000..50_000, signature.iter().copied());
 
-    let result = scanner.scan(&large_content).expect("Scan failed");
+    let result = scanner.scan_buf(&large_content).expect("Scan failed");
     assert!(matches!(result, ScanResult::Malicious(_)));
 }
 
@@ -281,7 +281,7 @@ fn test_add_sig_dir_loads_signatures() {
 
     // Test that the loaded signature works
     let mut scanner = Scanner::from(&sig_set);
-    let result = scanner.scan(b"b3BlbmRldGVjdAo=").expect("Scan failed");
+    let result = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
     assert!(matches!(result, ScanResult::Malicious(_)));
 }
 
@@ -302,7 +302,7 @@ fn test_add_sig_dir_with_scan() {
     // Test file with signature
     let file_content =
         fs::read("tests/test_files/simple_text_with_sig.txt").expect("Failed to read test file");
-    let result = scanner.scan(&file_content).expect("Scan failed");
+    let result = scanner.scan_buf(&file_content).expect("Scan failed");
 
     match result {
         ScanResult::Malicious(detections) => {
@@ -315,7 +315,7 @@ fn test_add_sig_dir_with_scan() {
     // Test file without signature
     let clean_content =
         fs::read("tests/test_files/simple_text_without_sig.txt").expect("Failed to read test file");
-    let result = scanner.scan(&clean_content).expect("Scan failed");
+    let result = scanner.scan_buf(&clean_content).expect("Scan failed");
     assert_eq!(result, ScanResult::Clean);
 }
 
@@ -337,11 +337,13 @@ fn test_add_sig_dir_recursive_loads_nested_signatures() {
     let mut scanner = Scanner::from(&sig_set);
 
     // Test with the main signature
-    let result = scanner.scan(b"b3BlbmRldGVjdAo=").expect("Scan failed");
+    let result = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
     assert!(matches!(result, ScanResult::Malicious(_)));
 
     // Test with the nested signature
-    let result = scanner.scan(b"NESTED_TEST_SIGNATURE").expect("Scan failed");
+    let result = scanner
+        .scan_buf(b"NESTED_TEST_SIGNATURE")
+        .expect("Scan failed");
     match result {
         ScanResult::Malicious(detections) => {
             assert_eq!(detections.len(), 1);
@@ -398,7 +400,7 @@ fn test_combine_manual_and_dir_signatures() {
     let mut scanner = Scanner::from(&sig_set);
 
     // The manual rule should always match
-    let result = scanner.scan(b"any content").expect("Scan failed");
+    let result = scanner.scan_buf(b"any content").expect("Scan failed");
     match result {
         ScanResult::Malicious(detections) => {
             assert!(detections.iter().any(|d| d.name == "ManualRule"));
