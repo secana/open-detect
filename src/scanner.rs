@@ -1,5 +1,6 @@
 use crate::{errors::Result, scan_result::ScanResult, signature::SigSet};
 use archive::{ArchiveExtractor, ArchiveFormat};
+use mime_type::{MimeFormat, MimeType};
 use std::path::Path;
 
 pub struct Scanner<'a> {
@@ -9,7 +10,7 @@ pub struct Scanner<'a> {
 impl Scanner<'_> {
     pub fn scan_buf(&mut self, buf: &[u8]) -> Result<ScanResult> {
         if let Some(file_type) = Self::infer_file_type(buf)
-            && Self::is_supported_archive(&file_type)
+            && ArchiveFormat::is_supported_mime(&file_type)
         {
             return self.scan_buf_ft(buf, &file_type);
         }
@@ -22,8 +23,8 @@ impl Scanner<'_> {
         self.scan_buf(&buf)
     }
 
-    pub fn scan_buf_ft(&mut self, buf: &[u8], file_type: &str) -> Result<ScanResult> {
-        if Self::is_supported_archive(file_type) {
+    pub fn scan_buf_ft(&mut self, buf: &[u8], file_type: &MimeType) -> Result<ScanResult> {
+        if ArchiveFormat::is_supported_mime(file_type) {
             self.scan_archive_buf(buf, file_type)
         } else {
             let sr = self.scanner.scan(buf)?.into();
@@ -31,18 +32,15 @@ impl Scanner<'_> {
         }
     }
 
-    pub fn scan_file_ft(&mut self, path: &Path, file_type: &str) -> Result<ScanResult> {
+    pub fn scan_file_ft(&mut self, path: &Path, file_type: &MimeType) -> Result<ScanResult> {
         let buf = std::fs::read(path)?;
         self.scan_buf_ft(&buf, file_type)
     }
 
-    fn scan_archive_buf(&mut self, buf: &[u8], file_type: &str) -> Result<ScanResult> {
-        let format = match file_type {
-            "application/zip" => ArchiveFormat::Zip,
-            "application/x-tar" => ArchiveFormat::Tar,
-            "application/gzip" | "application/x-gzip" => ArchiveFormat::TarGz,
-            "application/x-bzip2" => ArchiveFormat::TarBz2,
-            _ => {
+    fn scan_archive_buf(&mut self, buf: &[u8], file_type: &MimeType) -> Result<ScanResult> {
+        let format = match ArchiveFormat::try_from(file_type) {
+            Ok(fmt) => fmt,
+            Err(_) => {
                 // If we can't handle it as an archive, scan directly
                 let sr = self.scanner.scan(buf)?.into();
                 return Ok(sr);
@@ -89,20 +87,10 @@ impl Scanner<'_> {
     }
 
     /// Infer file type from buffer using the infer crate
-    fn infer_file_type(buf: &[u8]) -> Option<String> {
-        infer::get(buf).map(|kind| kind.mime_type().to_string())
-    }
-
-    /// Check if a given MIME type is a supported archive format
-    fn is_supported_archive(file_type: &str) -> bool {
-        matches!(
-            file_type,
-            "application/zip"
-                | "application/x-tar"
-                | "application/gzip"
-                | "application/x-gzip"
-                | "application/x-bzip2"
-        )
+    fn infer_file_type(buf: &[u8]) -> Option<MimeType> {
+        infer::get(buf)
+            .map(|kind| kind.mime_type().to_string())
+            .and_then(|mime| MimeType::from_mime(&mime))
     }
 }
 
@@ -162,23 +150,11 @@ mod tests {
         let zip_magic = b"PK\x03\x04";
         assert_eq!(
             Scanner::infer_file_type(zip_magic),
-            Some("application/zip".to_string())
+            Some(MimeType::Archive(mime_type::Archive::Zip))
         );
 
-        // Test text file (should return None or text/plain)
         let text = b"hello world";
         let result = Scanner::infer_file_type(text);
-        assert!(result.is_none() || result == Some("text/plain".to_string()));
-    }
-
-    #[test]
-    fn test_is_supported_archive() {
-        assert!(Scanner::is_supported_archive("application/zip"));
-        assert!(Scanner::is_supported_archive("application/x-tar"));
-        assert!(Scanner::is_supported_archive("application/gzip"));
-        assert!(Scanner::is_supported_archive("application/x-gzip"));
-        assert!(Scanner::is_supported_archive("application/x-bzip2"));
-        assert!(!Scanner::is_supported_archive("text/plain"));
-        assert!(!Scanner::is_supported_archive("application/pdf"));
+        assert!(result.is_none());
     }
 }

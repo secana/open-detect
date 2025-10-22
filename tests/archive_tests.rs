@@ -1,3 +1,4 @@
+use mime_type::MimeType;
 use open_detect::{ScanResult, Scanner, SigSetBuilder};
 use std::fs;
 use std::path::Path;
@@ -282,7 +283,7 @@ fn test_scan_buf_ft_with_zip() {
     let archive_data = fs::read(archive_path).expect("Failed to read archive");
 
     let result = scanner
-        .scan_buf_ft(&archive_data, "application/zip")
+        .scan_buf_ft(&archive_data, &MimeType::Archive(mime_type::Archive::Zip))
         .expect("Scan failed");
 
     assert_eq!(result, ScanResult::Clean);
@@ -296,7 +297,7 @@ fn test_scan_file_ft_with_zip() {
 
     let archive_path = Path::new("tests/test_archives/malicious_only.zip");
     let result = scanner
-        .scan_file_ft(archive_path, "application/zip")
+        .scan_file_ft(archive_path, &MimeType::Archive(mime_type::Archive::Zip))
         .expect("Scan failed");
 
     assert!(matches!(result, ScanResult::Malicious(_)));

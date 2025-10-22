@@ -89,14 +89,15 @@ dependencies = [
 
 [[package]]
 name = "archive"
-version = "0.1.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f57c41f4d577a0f44cc1c7df09a3901c2569f73086f620a3f79fa70c85c767bb"
+checksum = "04dd2900457e4a5a450db13a5e6b3dd2d7b4b1e85f177a37d612473538c0c659"
 dependencies = [
  "bzip2",
  "flate2",
  "lz4",
  "lzma-rs",
+ "mime-type",
  "sevenz-rust",
  "tar",
  "thiserror 2.0.17",
@@ -1374,9 +1375,9 @@ dependencies = [
 
 [[package]]
 name = "memmap2"
-version = "0.9.8"
+version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "843a98750cd611cc2965a8213b53b43e715f13c37a9e096c6408e69990961db7"
+checksum = "744133e4a0e0a658e1374cf3bf8e415c4052a15a111acd372764c55b4177d490"
 dependencies = [
  "libc",
 ]
@@ -1390,6 +1391,12 @@ dependencies = [
  "cpufeatures",
  "rustversion",
 ]
+
+[[package]]
+name = "mime-type"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e3e3895477670a13f7d4bd8c675538c1a45cc222161809aef077ce2b2aa4174"
 
 [[package]]
 name = "minimal-lexical"
@@ -1543,6 +1550,7 @@ version = "0.1.0"
 dependencies = [
  "archive",
  "infer",
+ "mime-type",
  "thiserror 2.0.17",
  "yara-x",
 ]
@@ -2325,9 +2333,9 @@ checksum = "562d481066bde0658276a35467c4af00bdc6ee726305698a55b86e61d7ad82bb"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.19"
+version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f63a545481291138910575129486daeaf8ac54aee4387fe7906919f7830c7d9d"
+checksum = "462eeb75aeb73aea900253ce739c8e18a67423fadf006037cd3ff27e82748a06"
 
 [[package]]
 name = "unicode-width"

@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 yara-x = "1.8"
-archive = "0.1"
+archive = "0.2"
 thiserror = "2.0"
 infer = "0.19"
+mime-type = "0.2"
