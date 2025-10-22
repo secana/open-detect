@@ -7,4 +7,4 @@ pub mod signature;
 pub use errors::{Error, Result};
 pub use scan_result::{Detection, ScanResult};
 pub use scanner::Scanner;
-pub use signature::{SigSet, SigSetBuilder, Signature};
+pub use signature::{SigSet, Signature};

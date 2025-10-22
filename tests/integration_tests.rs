@@ -1,4 +1,4 @@
-use open_detect::{ScanResult, Scanner, SigSetBuilder, Signature};
+use open_detect::{ScanResult, Scanner, SigSet, Signature};
 use std::fs;
 
 #[test]
@@ -7,10 +7,8 @@ fn test_scan_file_with_matching_signature() {
     let rule_path = "tests/test_sigs/opendetect.yara";
     let rule_content = fs::read_to_string(rule_path).expect("Failed to read YARA rule file");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature(rule_content))
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
     let mut scanner = Scanner::from(sig_set);
 
@@ -38,10 +36,8 @@ fn test_scan_file_without_matching_signature() {
     let rule_path = "tests/test_sigs/opendetect.yara";
     let rule_content = fs::read_to_string(rule_path).expect("Failed to read YARA rule file");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature(rule_content))
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
     let mut scanner = Scanner::from(sig_set);
 
@@ -60,10 +56,8 @@ fn test_scan_empty_file() {
     let rule_path = "tests/test_sigs/opendetect.yara";
     let rule_content = fs::read_to_string(rule_path).expect("Failed to read YARA rule file");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature(rule_content))
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
     let mut scanner = Scanner::from(sig_set);
 
@@ -78,10 +72,8 @@ fn test_scan_signature_at_different_positions() {
     let rule_path = "tests/test_sigs/opendetect.yara";
     let rule_content = fs::read_to_string(rule_path).expect("Failed to read YARA rule file");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature(rule_content))
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
     let mut scanner = Scanner::from(sig_set);
 
@@ -106,10 +98,8 @@ fn test_multiple_scans_with_same_scanner() {
     let rule_path = "tests/test_sigs/opendetect.yara";
     let rule_content = fs::read_to_string(rule_path).expect("Failed to read YARA rule file");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature(rule_content))
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
     let mut scanner = Scanner::from(sig_set);
 
@@ -131,10 +121,8 @@ fn test_scan_result_detection_details() {
     let rule_path = "tests/test_sigs/opendetect.yara";
     let rule_content = fs::read_to_string(rule_path).expect("Failed to read YARA rule file");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature(rule_content))
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
     let mut scanner = Scanner::from(sig_set);
 
@@ -155,12 +143,9 @@ fn test_scan_result_detection_details() {
 #[test]
 fn test_signature_set_with_no_rules() {
     // Build an empty signature set
-    let result = SigSetBuilder::new().build();
+    let sig_set = SigSet::new();
 
     // Should succeed even with no rules
-    assert!(result.is_ok());
-
-    let sig_set = result.unwrap();
     assert_eq!(sig_set.count(), 0);
 
     let mut scanner = Scanner::from(sig_set);
@@ -175,10 +160,8 @@ fn test_case_sensitivity_of_signature() {
     let rule_path = "tests/test_sigs/opendetect.yara";
     let rule_content = fs::read_to_string(rule_path).expect("Failed to read YARA rule file");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature(rule_content))
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
     let mut scanner = Scanner::from(sig_set);
 
@@ -196,10 +179,8 @@ fn test_partial_signature_match() {
     let rule_path = "tests/test_sigs/opendetect.yara";
     let rule_content = fs::read_to_string(rule_path).expect("Failed to read YARA rule file");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature(rule_content))
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
     let mut scanner = Scanner::from(sig_set);
 
@@ -213,10 +194,8 @@ fn test_scan_binary_data() {
     let rule_path = "tests/test_sigs/opendetect.yara";
     let rule_content = fs::read_to_string(rule_path).expect("Failed to read YARA rule file");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature(rule_content))
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
     let mut scanner = Scanner::from(sig_set);
 
@@ -235,10 +214,8 @@ fn test_scan_large_file_with_signature() {
     let rule_path = "tests/test_sigs/opendetect.yara";
     let rule_content = fs::read_to_string(rule_path).expect("Failed to read YARA rule file");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature(rule_content))
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
     let mut scanner = Scanner::from(sig_set);
 
@@ -270,11 +247,9 @@ fn test_add_sig_dir_loads_signatures() {
 
     let sig_dir = Path::new("tests/test_sigs");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sig_dir(sig_dir)
-        .expect("Failed to load signatures from directory")
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set = SigSet::new()
+        .with_sig_dir(sig_dir)
+        .expect("Failed to load signatures");
 
     // Should have loaded the opendetect.yara file
     assert_eq!(sig_set.count(), 1);
@@ -291,11 +266,9 @@ fn test_add_sig_dir_with_scan() {
 
     let sig_dir = Path::new("tests/test_sigs");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sig_dir(sig_dir)
-        .expect("Failed to load signatures from directory")
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set = SigSet::new()
+        .with_sig_dir(sig_dir)
+        .expect("Failed to load signatures");
 
     let mut scanner = Scanner::from(sig_set.clone());
 
@@ -325,11 +298,9 @@ fn test_add_sig_dir_recursive_loads_nested_signatures() {
 
     let sig_dir = Path::new("tests/test_sigs");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sig_dir_recursive(sig_dir)
-        .expect("Failed to load signatures recursively")
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set = SigSet::new()
+        .with_sig_dir_recursive(sig_dir)
+        .expect("Failed to load signatures");
 
     // Should have loaded both opendetect.yara and subdir/nested_rule.yara
     assert_eq!(sig_set.count(), 2);
@@ -359,7 +330,7 @@ fn test_add_sig_dir_nonexistent_directory() {
 
     let sig_dir = Path::new("tests/nonexistent_directory");
 
-    let result = SigSetBuilder::new().add_sig_dir(sig_dir);
+    let result = SigSet::new().with_sig_dir(sig_dir);
 
     assert!(result.is_err());
 }
@@ -371,13 +342,11 @@ fn test_add_sig_dir_ignores_non_yara_files() {
     // This directory contains both .yara and .txt files
     let sig_dir = Path::new("tests/test_sigs");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sig_dir(sig_dir)
-        .expect("Failed to load signatures")
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set = SigSet::new()
+        .with_sig_dir(sig_dir)
+        .expect("Failed to load signatures");
 
-    // Should only load .yara files, not .txt or other files
+    // Should only load .yara files, not .txt or .md files
     assert_eq!(sig_set.count(), 1);
 }
 
@@ -387,12 +356,11 @@ fn test_combine_manual_and_dir_signatures() {
 
     let sig_dir = Path::new("tests/test_sigs");
 
-    let sig_set = SigSetBuilder::new()
-        .add_sigs(Signature("rule ManualRule { condition: true }".to_string()))
-        .add_sig_dir(sig_dir)
-        .expect("Failed to load signatures from directory")
-        .build()
-        .expect("Failed to build signature set");
+    let sig_set =
+        SigSet::from_signature(Signature("rule ManualRule { condition: true }".to_string()))
+            .expect("Failed to create initial sig set")
+            .with_sig_dir(sig_dir)
+            .expect("Failed to load signatures");
 
     // Should have 1 manual rule + 1 from directory
     assert_eq!(sig_set.count(), 2);

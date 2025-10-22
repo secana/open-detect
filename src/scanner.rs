@@ -129,14 +129,12 @@ impl From<SigSet> for Scanner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::signature::{SigSetBuilder, Signature};
+    use crate::signature::Signature;
 
     #[test]
     fn scan_one_sig_matches() {
-        let signature_set = SigSetBuilder::new()
-            .add_sigs(Signature("rule test { condition: true }".to_string()))
-            .build()
-            .unwrap();
+        let signature_set =
+            SigSet::from_signature(Signature("rule test { condition: true }".to_string())).unwrap();
         let mut scanner = Scanner::from(signature_set);
 
         let result = scanner.scan_buf(b"test input").unwrap();
@@ -145,10 +143,9 @@ mod tests {
 
     #[test]
     fn scan_one_sig_no_match() {
-        let signature_set = SigSetBuilder::new()
-            .add_sigs(Signature("rule test { condition: false }".to_string()))
-            .build()
-            .unwrap();
+        let signature_set =
+            SigSet::from_signature(Signature("rule test { condition: false }".to_string()))
+                .unwrap();
         let mut scanner = Scanner::from(signature_set);
         let result = scanner.scan_buf(b"test input").unwrap();
         assert_eq!(ScanResult::Clean, result);
@@ -156,13 +153,11 @@ mod tests {
 
     #[test]
     fn scan_multiple_sigs_match() {
-        let signature_set = SigSetBuilder::new()
-            .add_sig(vec![
-                Signature("rule test1 { condition: true }".to_string()),
-                Signature("rule test2 { condition: true }".to_string()),
-            ])
-            .build()
-            .unwrap();
+        let signature_set = SigSet::from_signatures(vec![
+            Signature("rule test1 { condition: true }".to_string()),
+            Signature("rule test2 { condition: true }".to_string()),
+        ])
+        .unwrap();
         let mut scanner = Scanner::from(signature_set);
         let result = scanner.scan_buf(b"test input").unwrap();
         assert_eq!(ScanResult::from(vec!["test1", "test2"]), result);
@@ -170,10 +165,8 @@ mod tests {
 
     #[test]
     fn test_scanner_new() {
-        let signature_set = SigSetBuilder::new()
-            .add_sigs(Signature("rule test { condition: true }".to_string()))
-            .build()
-            .unwrap();
+        let signature_set =
+            SigSet::from_signature(Signature("rule test { condition: true }".to_string())).unwrap();
 
         let scanner = Scanner::new(signature_set);
         assert_eq!(scanner.max_extracted_size, 500 * 1024 * 1024);
@@ -182,10 +175,8 @@ mod tests {
 
     #[test]
     fn test_scanner_with_custom_sizes() {
-        let signature_set = SigSetBuilder::new()
-            .add_sigs(Signature("rule test { condition: true }".to_string()))
-            .build()
-            .unwrap();
+        let signature_set =
+            SigSet::from_signature(Signature("rule test { condition: true }".to_string())).unwrap();
 
         let scanner = Scanner::new(signature_set)
             .with_max_extracted_size(100 * 1024 * 1024) // 100 MB

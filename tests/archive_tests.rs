@@ -1,16 +1,14 @@
 use mime_type::MimeType;
-use open_detect::{ScanResult, Scanner, SigSetBuilder};
+use open_detect::{ScanResult, Scanner, SigSet};
 use std::fs;
 use std::path::Path;
 
 /// Helper function to load the test signature set
 fn load_test_sigset() -> open_detect::SigSet {
     let sig_dir = Path::new("tests/test_sigs");
-    SigSetBuilder::new()
-        .add_sig_dir_recursive(sig_dir)
+    SigSet::new()
+        .with_sig_dir_recursive(sig_dir)
         .expect("Failed to load test signatures")
-        .build()
-        .expect("Failed to build signature set")
 }
 
 /// Helper function to scan an archive file
