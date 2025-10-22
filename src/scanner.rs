@@ -3,20 +3,21 @@ use archive::{ArchiveExtractor, ArchiveFormat};
 use mime_type::{MimeFormat, MimeType};
 use std::path::Path;
 
-pub struct Scanner<'a> {
-    scanner: yara_x::Scanner<'a>,
+pub struct Scanner {
+    sig_set: SigSet,
     max_extracted_size: usize,
     max_total_extracted_size: usize,
 }
 
-impl Scanner<'_> {
+impl Scanner {
     pub fn scan_buf(&mut self, buf: &[u8]) -> Result<ScanResult> {
         if let Some(file_type) = Self::infer_file_type(buf)
             && ArchiveFormat::is_supported_mime(&file_type)
         {
             return self.scan_buf_ft(buf, &file_type);
         }
-        let sr = self.scanner.scan(buf)?.into();
+        let mut scanner = yara_x::Scanner::new(&self.sig_set.rules);
+        let sr = scanner.scan(buf)?.into();
         Ok(sr)
     }
 
@@ -29,7 +30,8 @@ impl Scanner<'_> {
         if ArchiveFormat::is_supported_mime(file_type) {
             self.scan_archive_buf(buf, file_type)
         } else {
-            let sr = self.scanner.scan(buf)?.into();
+            let mut scanner = yara_x::Scanner::new(&self.sig_set.rules);
+            let sr = scanner.scan(buf)?.into();
             Ok(sr)
         }
     }
@@ -44,7 +46,8 @@ impl Scanner<'_> {
             Ok(fmt) => fmt,
             Err(_) => {
                 // If we can't handle it as an archive, scan directly
-                let sr = self.scanner.scan(buf)?.into();
+                let mut scanner = yara_x::Scanner::new(&self.sig_set.rules);
+                let sr = scanner.scan(buf)?.into();
                 return Ok(sr);
             }
         };
@@ -96,10 +99,10 @@ impl Scanner<'_> {
     }
 }
 
-impl<'a> From<&'a SigSet> for Scanner<'a> {
-    fn from(signature_set: &'a SigSet) -> Self {
+impl From<SigSet> for Scanner {
+    fn from(sig_set: SigSet) -> Self {
         Scanner {
-            scanner: yara_x::Scanner::new(&signature_set.rules),
+            sig_set,
             max_extracted_size: 500 * 1024 * 1024, // 500 MB
             max_total_extracted_size: 2 * 1024 * 1024 * 1024, // 2 GB
         }
@@ -117,7 +120,7 @@ mod tests {
             .add_sigs(Signature("rule test { condition: true }".to_string()))
             .build()
             .unwrap();
-        let mut scanner = Scanner::from(&signature_set);
+        let mut scanner = Scanner::from(signature_set);
 
         let result = scanner.scan_buf(b"test input").unwrap();
         assert_eq!(ScanResult::from("test"), result);
@@ -129,7 +132,7 @@ mod tests {
             .add_sigs(Signature("rule test { condition: false }".to_string()))
             .build()
             .unwrap();
-        let mut scanner = Scanner::from(&signature_set);
+        let mut scanner = Scanner::from(signature_set);
         let result = scanner.scan_buf(b"test input").unwrap();
         assert_eq!(ScanResult::Clean, result);
     }
@@ -143,7 +146,7 @@ mod tests {
             ])
             .build()
             .unwrap();
-        let mut scanner = Scanner::from(&signature_set);
+        let mut scanner = Scanner::from(signature_set);
         let result = scanner.scan_buf(b"test input").unwrap();
         assert_eq!(ScanResult::from(vec!["test1", "test2"]), result);
     }

@@ -1,9 +1,18 @@
 use crate::errors::Result;
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
 
 pub struct SigSet {
-    pub(crate) rules: yara_x::Rules,
+    pub(crate) rules: Arc<yara_x::Rules>,
+}
+
+impl Clone for SigSet {
+    fn clone(&self) -> Self {
+        Self {
+            rules: Arc::clone(&self.rules),
+        }
+    }
 }
 
 impl SigSet {
@@ -105,7 +114,9 @@ impl SigSetBuilder {
         }
         let rules = compiler.build();
 
-        let signature_set = SigSet { rules };
+        let signature_set = SigSet {
+            rules: Arc::new(rules),
+        };
         Ok(signature_set)
     }
 }
