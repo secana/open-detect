@@ -10,6 +10,27 @@ pub struct Scanner {
 }
 
 impl Scanner {
+    /// Create a new Scanner from a SigSet with default size limits
+    pub fn new(sig_set: SigSet) -> Self {
+        Self {
+            sig_set,
+            max_extracted_size: 500 * 1024 * 1024, // 500 MB
+            max_total_extracted_size: 2 * 1024 * 1024 * 1024, // 2 GB
+        }
+    }
+
+    /// Set the maximum size for individual extracted files (default: 500 MB)
+    pub fn with_max_extracted_size(mut self, size: usize) -> Self {
+        self.max_extracted_size = size;
+        self
+    }
+
+    /// Set the maximum total size for all extracted files (default: 2 GB)
+    pub fn with_max_total_extracted_size(mut self, size: usize) -> Self {
+        self.max_total_extracted_size = size;
+        self
+    }
+
     pub fn scan_buf(&mut self, buf: &[u8]) -> Result<ScanResult> {
         if let Some(file_type) = Self::infer_file_type(buf)
             && ArchiveFormat::is_supported_mime(&file_type)
@@ -101,11 +122,7 @@ impl Scanner {
 
 impl From<SigSet> for Scanner {
     fn from(sig_set: SigSet) -> Self {
-        Scanner {
-            sig_set,
-            max_extracted_size: 500 * 1024 * 1024, // 500 MB
-            max_total_extracted_size: 2 * 1024 * 1024 * 1024, // 2 GB
-        }
+        Scanner::new(sig_set)
     }
 }
 
@@ -149,6 +166,33 @@ mod tests {
         let mut scanner = Scanner::from(signature_set);
         let result = scanner.scan_buf(b"test input").unwrap();
         assert_eq!(ScanResult::from(vec!["test1", "test2"]), result);
+    }
+
+    #[test]
+    fn test_scanner_new() {
+        let signature_set = SigSetBuilder::new()
+            .add_sigs(Signature("rule test { condition: true }".to_string()))
+            .build()
+            .unwrap();
+
+        let scanner = Scanner::new(signature_set);
+        assert_eq!(scanner.max_extracted_size, 500 * 1024 * 1024);
+        assert_eq!(scanner.max_total_extracted_size, 2 * 1024 * 1024 * 1024);
+    }
+
+    #[test]
+    fn test_scanner_with_custom_sizes() {
+        let signature_set = SigSetBuilder::new()
+            .add_sigs(Signature("rule test { condition: true }".to_string()))
+            .build()
+            .unwrap();
+
+        let scanner = Scanner::new(signature_set)
+            .with_max_extracted_size(100 * 1024 * 1024) // 100 MB
+            .with_max_total_extracted_size(1024 * 1024 * 1024); // 1 GB
+
+        assert_eq!(scanner.max_extracted_size, 100 * 1024 * 1024);
+        assert_eq!(scanner.max_total_extracted_size, 1024 * 1024 * 1024);
     }
 
     #[test]
