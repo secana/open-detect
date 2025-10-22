@@ -5,6 +5,8 @@ use std::path::Path;
 
 pub struct Scanner<'a> {
     scanner: yara_x::Scanner<'a>,
+    max_extracted_size: usize,
+    max_total_extracted_size: usize,
 }
 
 impl Scanner<'_> {
@@ -54,8 +56,8 @@ impl Scanner<'_> {
     fn scan_archive(&mut self, buf: &[u8], format: ArchiveFormat) -> Result<ScanResult> {
         // Create extractor with reasonable limits
         let extractor = ArchiveExtractor::new()
-            .with_max_file_size(500 * 1024 * 1024) // 500 MB per file
-            .with_max_total_size(2 * 1024 * 1024 * 1024); // 2 GB total
+            .with_max_file_size(self.max_extracted_size)
+            .with_max_total_size(self.max_total_extracted_size);
 
         // Extract all files from the archive
         let extracted_files = extractor
@@ -98,6 +100,8 @@ impl<'a> From<&'a SigSet> for Scanner<'a> {
     fn from(signature_set: &'a SigSet) -> Self {
         Scanner {
             scanner: yara_x::Scanner::new(&signature_set.rules),
+            max_extracted_size: 500 * 1024 * 1024, // 500 MB
+            max_total_extracted_size: 2 * 1024 * 1024 * 1024, // 2 GB
         }
     }
 }
