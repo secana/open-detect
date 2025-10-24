@@ -1,4 +1,4 @@
-# open-detect
+# Open Detect
 
 A fast, flexible malware detection engine with YARA rule support and automatic archive extraction for security researchers.
 
@@ -6,8 +6,8 @@ A fast, flexible malware detection engine with YARA rule support and automatic a
 [![Documentation](https://docs.rs/open-detect/badge.svg)](https://docs.rs/open-detect)
 [![License](https://img.shields.io/crates/l/open-detect.svg)](https://github.com/secana/open-detect)
 
-  Disclaimer: This project is still in early development and should not be used for production purposes.
-  The API is subject to change without notice.
+    Disclaimer: This project is still in early development and should not be used for production purposes.
+    The API is subject to change without notice.
 
 ## Features
 
@@ -41,65 +41,7 @@ match scanner.scan_file(Path::new("suspicious.exe")).unwrap() {
 }
 ```
 
-## Usage Examples
-
-### Scan a Buffer
-
-```rust
-use open_detect::{Scanner, SigSet, Signature};
-
-let sig = Signature(r#"
-    rule ExampleMalware {
-        strings:
-            $a = "malicious_pattern"
-        condition:
-            $a
-    }
-"#.to_string());
-
-let sig_set = SigSet::from_signature(sig).unwrap();
-let scanner = Scanner::new(sig_set);
-
-let data = b"some data with malicious_pattern inside";
-let result = scanner.scan_buf(data).unwrap();
-```
-
-### Configure Extraction Limits
-
-```rust
-use open_detect::{Scanner, SigSet};
-
-let sig_set = SigSet::new();
-let scanner = Scanner::new(sig_set)
-    .with_max_extracted_size(100 * 1024 * 1024)      // 100 MB per file
-    .with_max_total_extracted_size(1024 * 1024 * 1024); // 1 GB total
-```
-
-### Build Signature Sets
-
-```rust
-use open_detect::{SigSet, Signature};
-use std::path::Path;
-
-// From individual signatures
-let sig_set = SigSet::from_signatures(vec![
-    Signature("rule test1 { condition: true }".to_string()),
-    Signature("rule test2 { strings: $a = \"test\" condition: $a }".to_string()),
-]).unwrap();
-
-// From a directory (loads .yar, .yara, .yrc files)
-let sig_set = SigSet::new()
-    .with_sig_dir(Path::new("signatures"))
-    .unwrap();
-
-// Combine multiple sources
-let sig_set = SigSet::from_signature(
-    Signature("rule custom { condition: true }".to_string())
-)
-.unwrap()
-.with_sig_dir_recursive(Path::new("signatures"))
-.unwrap();
-```
+For more examples and detailed usage, please refer to the [documentation](https://docs.rs/open-detect).
 
 ## Related Projects
 
