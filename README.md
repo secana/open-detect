@@ -4,7 +4,6 @@ A fast, flexible malware detection engine with YARA rule support and automatic a
 
 [![Crates.io](https://img.shields.io/crates/v/open-detect.svg)](https://crates.io/crates/open-detect)
 [![Documentation](https://docs.rs/open-detect/badge.svg)](https://docs.rs/open-detect)
-[![License](https://img.shields.io/crates/l/open-detect.svg)](https://github.com/secana/open-detect)
 
     Disclaimer: This project is still in early development and should not be used for production purposes.
     The API is subject to change without notice.
