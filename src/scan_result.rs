@@ -1,8 +1,22 @@
 type Detections = Vec<Detection>;
 
+/// Result of a malware scan operation.
+///
+/// Represents whether the scanned content is clean or contains detected threats.
+///
+/// # Examples
+///
+/// ```
+/// use open_detect::ScanResult;
+///
+/// let clean = ScanResult::Clean;
+/// assert_eq!(clean, ScanResult::Clean);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ScanResult {
+    /// No threats detected - the content is clean.
     Clean,
+    /// One or more threats detected, with details about each detection.
     Malicious(Detections),
 }
 
@@ -45,8 +59,23 @@ impl From<Vec<&str>> for ScanResult {
     }
 }
 
+/// Details about a detected threat.
+///
+/// Contains information about a YARA rule that matched during scanning.
+///
+/// # Examples
+///
+/// ```
+/// use open_detect::Detection;
+///
+/// let detection = Detection {
+///     name: "MalwareRule".to_string(),
+/// };
+/// assert_eq!(detection.name, "MalwareRule");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Detection {
+    /// The name/identifier of the YARA rule that matched.
     pub name: String,
 }
 

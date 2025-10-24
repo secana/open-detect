@@ -10,7 +10,23 @@ pub struct Scanner {
 }
 
 impl Scanner {
-    /// Create a new Scanner from a SigSet with default size limits
+    /// Create a new Scanner from a `SigSet` with default size limits.
+    ///
+    /// # Default Limits
+    /// - Max extracted file size: 500 MB
+    /// - Max total extracted size: 2 GB
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use open_detect::{Scanner, SigSet, Signature};
+    ///
+    /// let sig_set = SigSet::from_signature(
+    ///     Signature("rule test { condition: true }".to_string())
+    /// ).unwrap();
+    /// let scanner = Scanner::new(sig_set);
+    /// ```
+    #[must_use]
     pub fn new(sig_set: SigSet) -> Self {
         Self {
             sig_set,
@@ -19,34 +35,137 @@ impl Scanner {
         }
     }
 
-    /// Set the maximum size for individual extracted files (default: 500 MB)
+    /// Set the maximum size for individual extracted files (default: 500 MB).
+    ///
+    /// This limit applies when scanning archives. Files larger than this limit
+    /// will be skipped during archive extraction.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use open_detect::{Scanner, SigSet};
+    /// # let sig_set = SigSet::new();
+    ///
+    /// let scanner = Scanner::new(sig_set)
+    ///     .with_max_extracted_size(100 * 1024 * 1024); // 100 MB
+    /// ```
+    #[must_use]
     pub fn with_max_extracted_size(mut self, size: usize) -> Self {
         self.max_extracted_size = size;
         self
     }
 
-    /// Set the maximum total size for all extracted files (default: 2 GB)
+    /// Set the maximum total size for all extracted files (default: 2 GB).
+    ///
+    /// This limit applies when scanning archives. Once the total size of extracted
+    /// files exceeds this limit, extraction stops.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use open_detect::{Scanner, SigSet};
+    /// # let sig_set = SigSet::new();
+    ///
+    /// let scanner = Scanner::new(sig_set)
+    ///     .with_max_total_extracted_size(1024 * 1024 * 1024); // 1 GB
+    /// ```
+    #[must_use]
     pub fn with_max_total_extracted_size(mut self, size: usize) -> Self {
         self.max_total_extracted_size = size;
         self
     }
 
+    /// Scan a buffer of data for malicious content.
+    ///
+    /// Automatically detects and extracts archives (ZIP, TAR, etc.) before scanning.
+    /// If the buffer contains an archive, all files within will be scanned recursively.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The YARA scanner fails to scan the data
+    /// - Archive extraction fails (corrupted archive, etc.)
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use open_detect::{Scanner, SigSet, Signature, ScanResult};
+    ///
+    /// # let sig_set = SigSet::from_signature(
+    /// #     Signature("rule test { condition: true }".to_string())
+    /// # ).unwrap();
+    /// let scanner = Scanner::new(sig_set);
+    /// let data = b"data to scan";
+    ///
+    /// match scanner.scan_buf(data).unwrap() {
+    ///     ScanResult::Clean => println!("No threats detected"),
+    ///     ScanResult::Malicious(detections) => {
+    ///         println!("Detected {} threats", detections.len());
+    ///     }
+    /// }
+    /// ```
     pub fn scan_buf(&self, buf: &[u8]) -> Result<ScanResult> {
-        if let Some(file_type) = Self::infer_file_type(buf)
-            && ArchiveFormat::is_supported_mime(&file_type)
-        {
-            return self.scan_buf_ft(buf, &file_type);
+        if let Some(file_type) = Self::infer_file_type(buf) {
+            if ArchiveFormat::is_supported_mime(&file_type) {
+                return self.scan_buf_ft(buf, &file_type);
+            }
         }
         let mut scanner = yara_x::Scanner::new(&self.sig_set.rules);
         let sr = scanner.scan(buf)?.into();
         Ok(sr)
     }
 
+    /// Scan a file for malicious content.
+    ///
+    /// Reads the entire file into memory and scans it. Automatically detects
+    /// and extracts archives before scanning.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The file cannot be read
+    /// - The YARA scanner fails to scan the data
+    /// - Archive extraction fails
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use open_detect::{Scanner, SigSet};
+    /// use std::path::Path;
+    ///
+    /// # let sig_set = SigSet::new();
+    /// let scanner = Scanner::new(sig_set);
+    /// let result = scanner.scan_file(Path::new("suspicious.exe")).unwrap();
+    /// ```
     pub fn scan_file(&self, path: &Path) -> Result<ScanResult> {
         let buf = std::fs::read(path)?;
         self.scan_buf(&buf)
     }
 
+    /// Scan a buffer with an explicitly specified file type.
+    ///
+    /// This is useful when you know the file type and want to skip automatic detection.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The YARA scanner fails to scan the data
+    /// - Archive extraction fails
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use open_detect::{Scanner, SigSet};
+    /// use mime_type::{MimeType, Archive};
+    ///
+    /// # let sig_set = SigSet::new();
+    /// let scanner = Scanner::new(sig_set);
+    /// let data = b"PK\x03\x04..."; // ZIP file data
+    /// let result = scanner.scan_buf_ft(
+    ///     data,
+    ///     &MimeType::Archive(Archive::Zip)
+    /// ).unwrap();
+    /// ```
     pub fn scan_buf_ft(&self, buf: &[u8], file_type: &MimeType) -> Result<ScanResult> {
         if ArchiveFormat::is_supported_mime(file_type) {
             self.scan_archive_buf(buf, file_type)
@@ -57,6 +176,31 @@ impl Scanner {
         }
     }
 
+    /// Scan a file with an explicitly specified file type.
+    ///
+    /// This is useful when you know the file type and want to skip automatic detection.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The file cannot be read
+    /// - The YARA scanner fails to scan the data
+    /// - Archive extraction fails
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use open_detect::{Scanner, SigSet};
+    /// use mime_type::{MimeType, Archive};
+    /// use std::path::Path;
+    ///
+    /// # let sig_set = SigSet::new();
+    /// let scanner = Scanner::new(sig_set);
+    /// let result = scanner.scan_file_ft(
+    ///     Path::new("archive.zip"),
+    ///     &MimeType::Archive(Archive::Zip)
+    /// ).unwrap();
+    /// ```
     pub fn scan_file_ft(&self, path: &Path, file_type: &MimeType) -> Result<ScanResult> {
         let buf = std::fs::read(path)?;
         self.scan_buf_ft(&buf, file_type)
