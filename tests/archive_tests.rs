@@ -14,7 +14,7 @@ fn load_test_sigset() -> open_detect::SigSet {
 /// Helper function to scan an archive file
 fn scan_archive(archive_path: &Path) -> ScanResult {
     let sig_set = load_test_sigset();
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     let archive_data = fs::read(archive_path).expect("Failed to read archive file");
     scanner.scan_buf(&archive_data).expect("Scan failed")
@@ -252,7 +252,7 @@ fn test_format_consistency_across_compression() {
 fn test_scan_file_method() {
     // Test the scan_file method instead of scan_buf
     let sig_set = load_test_sigset();
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     let archive_path = Path::new("tests/test_archives/clean_only.zip");
     let result = scanner.scan_file(archive_path).expect("Scan failed");
@@ -263,7 +263,7 @@ fn test_scan_file_method() {
 #[test]
 fn test_scan_file_malicious() {
     let sig_set = load_test_sigset();
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     let archive_path = Path::new("tests/test_archives/malicious_only.zip");
     let result = scanner.scan_file(archive_path).expect("Scan failed");
@@ -275,7 +275,7 @@ fn test_scan_file_malicious() {
 fn test_scan_buf_ft_with_zip() {
     // Test scanning with explicit file type
     let sig_set = load_test_sigset();
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     let archive_path = Path::new("tests/test_archives/clean_only.zip");
     let archive_data = fs::read(archive_path).expect("Failed to read archive");
@@ -291,7 +291,7 @@ fn test_scan_buf_ft_with_zip() {
 fn test_scan_file_ft_with_zip() {
     // Test scanning file with explicit file type
     let sig_set = load_test_sigset();
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     let archive_path = Path::new("tests/test_archives/malicious_only.zip");
     let result = scanner
@@ -305,7 +305,7 @@ fn test_scan_file_ft_with_zip() {
 fn test_scan_non_archive_file() {
     // Test that non-archive files are scanned correctly
     let sig_set = load_test_sigset();
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     let file_path = Path::new("tests/test_files/simple_text_with_sig.txt");
     let result = scanner.scan_file(file_path).expect("Scan failed");
@@ -344,7 +344,7 @@ fn test_scan_performance_basic() {
 fn test_multiple_scans_with_same_scanner() {
     // Verify that scanner can be reused for multiple scans
     let sig_set = load_test_sigset();
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // Scan clean archive
     let clean_path = Path::new("tests/test_archives/clean_only.zip");

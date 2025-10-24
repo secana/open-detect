@@ -31,7 +31,7 @@ impl Scanner {
         self
     }
 
-    pub fn scan_buf(&mut self, buf: &[u8]) -> Result<ScanResult> {
+    pub fn scan_buf(&self, buf: &[u8]) -> Result<ScanResult> {
         if let Some(file_type) = Self::infer_file_type(buf)
             && ArchiveFormat::is_supported_mime(&file_type)
         {
@@ -42,12 +42,12 @@ impl Scanner {
         Ok(sr)
     }
 
-    pub fn scan_file(&mut self, path: &Path) -> Result<ScanResult> {
+    pub fn scan_file(&self, path: &Path) -> Result<ScanResult> {
         let buf = std::fs::read(path)?;
         self.scan_buf(&buf)
     }
 
-    pub fn scan_buf_ft(&mut self, buf: &[u8], file_type: &MimeType) -> Result<ScanResult> {
+    pub fn scan_buf_ft(&self, buf: &[u8], file_type: &MimeType) -> Result<ScanResult> {
         if ArchiveFormat::is_supported_mime(file_type) {
             self.scan_archive_buf(buf, file_type)
         } else {
@@ -57,12 +57,12 @@ impl Scanner {
         }
     }
 
-    pub fn scan_file_ft(&mut self, path: &Path, file_type: &MimeType) -> Result<ScanResult> {
+    pub fn scan_file_ft(&self, path: &Path, file_type: &MimeType) -> Result<ScanResult> {
         let buf = std::fs::read(path)?;
         self.scan_buf_ft(&buf, file_type)
     }
 
-    fn scan_archive_buf(&mut self, buf: &[u8], file_type: &MimeType) -> Result<ScanResult> {
+    fn scan_archive_buf(&self, buf: &[u8], file_type: &MimeType) -> Result<ScanResult> {
         let format = match ArchiveFormat::try_from(file_type) {
             Ok(fmt) => fmt,
             Err(_) => {
@@ -77,7 +77,7 @@ impl Scanner {
     }
 
     /// Scan an archive using the unified archive crate
-    fn scan_archive(&mut self, buf: &[u8], format: ArchiveFormat) -> Result<ScanResult> {
+    fn scan_archive(&self, buf: &[u8], format: ArchiveFormat) -> Result<ScanResult> {
         // Create extractor with reasonable limits
         let extractor = ArchiveExtractor::new()
             .with_max_file_size(self.max_extracted_size)
@@ -135,7 +135,7 @@ mod tests {
     fn scan_one_sig_matches() {
         let signature_set =
             SigSet::from_signature(Signature("rule test { condition: true }".to_string())).unwrap();
-        let mut scanner = Scanner::from(signature_set);
+        let scanner = Scanner::from(signature_set);
 
         let result = scanner.scan_buf(b"test input").unwrap();
         assert_eq!(ScanResult::from("test"), result);
@@ -146,7 +146,7 @@ mod tests {
         let signature_set =
             SigSet::from_signature(Signature("rule test { condition: false }".to_string()))
                 .unwrap();
-        let mut scanner = Scanner::from(signature_set);
+        let scanner = Scanner::from(signature_set);
         let result = scanner.scan_buf(b"test input").unwrap();
         assert_eq!(ScanResult::Clean, result);
     }
@@ -158,7 +158,7 @@ mod tests {
             Signature("rule test2 { condition: true }".to_string()),
         ])
         .unwrap();
-        let mut scanner = Scanner::from(signature_set);
+        let scanner = Scanner::from(signature_set);
         let result = scanner.scan_buf(b"test input").unwrap();
         assert_eq!(ScanResult::from(vec!["test1", "test2"]), result);
     }
@@ -198,5 +198,14 @@ mod tests {
         let text = b"hello world";
         let result = Scanner::infer_file_type(text);
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_scanner_is_send_and_sync() {
+        // Compile-time check that Scanner implements Send and Sync
+        fn assert_send<T: Send>() {}
+        fn assert_sync<T: Sync>() {}
+        assert_send::<Scanner>();
+        assert_sync::<Scanner>();
     }
 }

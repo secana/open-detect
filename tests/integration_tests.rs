@@ -10,7 +10,7 @@ fn test_scan_file_with_matching_signature() {
     let sig_set =
         SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // Test file that contains the signature
     let test_file_path = "tests/test_files/simple_text_with_sig.txt";
@@ -39,7 +39,7 @@ fn test_scan_file_without_matching_signature() {
     let sig_set =
         SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // Test file that does NOT contain the signature
     let test_file_path = "tests/test_files/simple_text_without_sig.txt";
@@ -59,7 +59,7 @@ fn test_scan_empty_file() {
     let sig_set =
         SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // Scan empty content
     let result = scanner.scan_buf(&[]).expect("Scan failed");
@@ -75,7 +75,7 @@ fn test_scan_signature_at_different_positions() {
     let sig_set =
         SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // Test signature at the beginning
     let content_start = b"b3BlbmRldGVjdAo= followed by text";
@@ -101,7 +101,7 @@ fn test_multiple_scans_with_same_scanner() {
     let sig_set =
         SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // First scan - malicious
     let result1 = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
@@ -124,7 +124,7 @@ fn test_scan_result_detection_details() {
     let sig_set =
         SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     let result = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
 
@@ -148,7 +148,7 @@ fn test_signature_set_with_no_rules() {
     // Should succeed even with no rules
     assert_eq!(sig_set.count(), 0);
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
     let scan_result = scanner.scan_buf(b"any content").expect("Scan failed");
 
     // Should always be clean with no rules
@@ -163,7 +163,7 @@ fn test_case_sensitivity_of_signature() {
     let sig_set =
         SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // Exact match - should detect
     let result1 = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
@@ -182,7 +182,7 @@ fn test_partial_signature_match() {
     let sig_set =
         SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // Partial match should NOT trigger
     let result = scanner.scan_buf(b"b3BlbmRl").expect("Scan failed");
@@ -197,7 +197,7 @@ fn test_scan_binary_data() {
     let sig_set =
         SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // Binary data with signature embedded
     let binary_data = [
@@ -217,7 +217,7 @@ fn test_scan_large_file_with_signature() {
     let sig_set =
         SigSet::from_signature(Signature(rule_content)).expect("Failed to build signature set");
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // Create a large file with signature buried in the middle
     let mut large_content = vec![b'A'; 100_000];
@@ -255,7 +255,7 @@ fn test_add_sig_dir_loads_signatures() {
     assert_eq!(sig_set.count(), 1);
 
     // Test that the loaded signature works
-    let mut scanner = Scanner::from(sig_set.clone());
+    let scanner = Scanner::from(sig_set.clone());
     let result = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
     assert!(matches!(result, ScanResult::Malicious(_)));
 }
@@ -270,7 +270,7 @@ fn test_add_sig_dir_with_scan() {
         .with_sig_dir(sig_dir)
         .expect("Failed to load signatures");
 
-    let mut scanner = Scanner::from(sig_set.clone());
+    let scanner = Scanner::from(sig_set.clone());
 
     // Test file with signature
     let file_content =
@@ -305,7 +305,7 @@ fn test_add_sig_dir_recursive_loads_nested_signatures() {
     // Should have loaded both opendetect.yara and subdir/nested_rule.yara
     assert_eq!(sig_set.count(), 2);
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // Test with the main signature
     let result = scanner.scan_buf(b"b3BlbmRldGVjdAo=").expect("Scan failed");
@@ -365,7 +365,7 @@ fn test_combine_manual_and_dir_signatures() {
     // Should have 1 manual rule + 1 from directory
     assert_eq!(sig_set.count(), 2);
 
-    let mut scanner = Scanner::from(sig_set);
+    let scanner = Scanner::from(sig_set);
 
     // The manual rule should always match
     let result = scanner.scan_buf(b"any content").expect("Scan failed");
