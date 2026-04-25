@@ -79,6 +79,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
+name = "ar"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d67af77d68a931ecd5cbd8a3b5987d63a1d1d1278f7f6a60ae33db485cdebb69"
+
+[[package]]
 name = "arbitrary"
 version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -89,10 +95,11 @@ dependencies = [
 
 [[package]]
 name = "archive"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04dd2900457e4a5a450db13a5e6b3dd2d7b4b1e85f177a37d612473538c0c659"
+checksum = "504d47fe6210ed2f749fbe9d7bf49f5aa9db37825800f0e2477face66ebe8b7b"
 dependencies = [
+ "ar",
  "bzip2",
  "flate2",
  "lz4",
