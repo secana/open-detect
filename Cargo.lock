@@ -95,9 +95,9 @@ dependencies = [
 
 [[package]]
 name = "archive"
-version = "0.3.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "504d47fe6210ed2f749fbe9d7bf49f5aa9db37825800f0e2477face66ebe8b7b"
+checksum = "acae61dd9c359f5ed0b1434458e8fe859dfa07e0cf161aa3547204259776d6f6"
 dependencies = [
  "ar",
  "bzip2",
@@ -108,7 +108,7 @@ dependencies = [
  "sevenz-rust",
  "tar",
  "thiserror 2.0.18",
- "zip 6.0.0",
+ "zip 8.6.0",
  "zstd",
 ]
 
@@ -2333,6 +2333,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f762ca8308eda1e38512dc88a99f021e5214699ba133de157f588c8bfd0745c7"
 
 [[package]]
+name = "typed-path"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e28f89b80c87b8fb0cf04ab448d5dd0dd0ade2f8891bae878de66a75a28600e"
+
+[[package]]
 name = "typenum"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3135,15 +3141,15 @@ dependencies = [
 
 [[package]]
 name = "zip"
-version = "6.0.0"
+version = "8.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb2a05c7c36fde6c09b08576c9f7fb4cda705990f73b58fe011abf7dfb24168b"
+checksum = "2d04a6b5381502aa6087c94c669499eb1602eb9c5e8198e534de571f7154809b"
 dependencies = [
- "arbitrary",
  "crc32fast",
  "flate2",
  "indexmap 2.12.0",
  "memchr",
+ "typed-path",
  "zopfli",
 ]
 
@@ -3155,9 +3161,9 @@ checksum = "2f06ae92f42f5e5c42443fd094f245eb656abf56dd7cce9b8b263236565e00f2"
 
 [[package]]
 name = "zopfli"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edfc5ee405f504cd4984ecc6f14d02d55cfda60fa4b689434ef4102aae150cd7"
+checksum = "f05cd8797d63865425ff89b5c4a48804f35ba0ce8d125800027ad6017d2b5249"
 dependencies = [
  "bumpalo",
  "crc32fast",
