@@ -9,7 +9,7 @@ repository = "https://github.com/secana/open-detect"
 
 [dependencies]
 yara-x = "1.8"
-archive = "0.3"
+archive = "1.0.0"
 thiserror = "2.0"
 infer = "0.22"
 mime-type = "0.2"
