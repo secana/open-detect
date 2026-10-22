@@ -105,10 +105,10 @@ impl Scanner {
     /// }
     /// ```
     pub fn scan_buf(&self, buf: &[u8]) -> Result<ScanResult> {
-        if let Some(file_type) = Self::infer_file_type(buf) {
-            if ArchiveFormat::is_supported_mime(&file_type) {
-                return self.scan_buf_ft(buf, &file_type);
-            }
+        if let Some(file_type) = Self::infer_file_type(buf)
+            && ArchiveFormat::is_supported_mime(&file_type)
+        {
+            return self.scan_buf_ft(buf, &file_type);
         }
         let mut scanner = yara_x::Scanner::new(&self.sig_set.rules);
         let sr = scanner.scan(buf)?.into();
@@ -236,16 +236,16 @@ impl Scanner {
 
         // Scan each extracted file
         for file in extracted_files {
-            // Skip directories
-            if file.is_directory {
-                continue;
-            }
+            match file {
+                archive::ArchiveEntry::File { path: _, data: d } => {
+                    // Recursively scan the contents (might be nested archives)
+                    let result = self.scan_buf(&d)?;
 
-            // Recursively scan the contents (might be nested archives)
-            let result = self.scan_buf(&file.data)?;
-
-            if let ScanResult::Malicious(detections) = result {
-                all_detections.extend(detections);
+                    if let ScanResult::Malicious(detections) = result {
+                        all_detections.extend(detections);
+                    }
+                }
+                _ => continue,
             }
         }
 
